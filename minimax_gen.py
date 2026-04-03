@@ -89,22 +89,33 @@ def download_image(url, output_dir):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMax 图片生成工具")
     parser.add_argument("--prompt", required=True, help="图片的文本描述")
-    parser.add_argument("--aspect_ratio", default="1:1", help="图片比例 (例如: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16)")
+    # 修改为支持多个比例，使用 nargs='+'
+    parser.add_argument("--aspect_ratio", nargs='+', default=["1:1"], 
+                        help="图片比例列表，用空格隔开 (例如: 1:1 16:9 4:3)。可选值: 1:1, 16:9, 4:3, 3:2, 2:3, 3:4, 9:16, 21:9")
     parser.add_argument("--model", default="image-01", choices=["image-01", "image-01-live"], help="API 模型名称")
     parser.add_argument("--output_dir", default="./outputs", help="图片保存目录")
 
     args = parser.parse_args()
 
-    # 执行生成
-    final_path = generate_image(
-        prompt=args.prompt,
-        aspect_ratio=args.aspect_ratio,
-        model=args.model,
-        output_dir=args.output_dir
-    )
+    final_paths = []
+    print(f"收到请求，准备为以下比例生成图片: {', '.join(args.aspect_ratio)}")
 
-    if final_path:
-        # 按照设计，输出最终路径供 OpenClaw 使用
-        print(f"\nRESULT_FILE_PATH: {final_path}")
+    for ratio in args.aspect_ratio:
+        path = generate_image(
+            prompt=args.prompt,
+            aspect_ratio=ratio,
+            model=args.model,
+            output_dir=args.output_dir
+        )
+        if path:
+            final_paths.append(path)
+
+    if final_paths:
+        print("\n" + "="*30)
+        print("所有图片生成完毕:")
+        for p in final_paths:
+            print(f"RESULT_FILE_PATH: {p}")
+        print("="*30)
     else:
+        print("未能成功生成任何图片。")
         exit(1)
