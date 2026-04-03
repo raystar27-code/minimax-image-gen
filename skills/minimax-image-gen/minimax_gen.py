@@ -6,8 +6,11 @@ import time
 from datetime import datetime
 from dotenv import load_dotenv
 
-# 加载 .env 环境变量
-load_dotenv()
+# 获取脚本所在目录
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 加载脚本所在目录的 .env 环境变量
+load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
 
 MINIMAX_API_KEY = os.getenv("MINIMAX_API_KEY")
 API_URL = "https://api.minimaxi.com/v1/image_generation"
@@ -117,7 +120,7 @@ def download_image(url, output_dir, suffix=""):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="MiniMax 全功能图片生成工具")
     parser.add_argument("--prompt", required=True, help="提示词")
-    parser.add_argument("--aspect_ratio", nargs='+', help="比例列表 (1:1等)")
+    parser.add_argument("--aspect_ratio", nargs='+', help="比例列表 (4:3, 16:9等)")
     parser.add_argument("--model", default="image-01", choices=["image-01", "image-01-live"])
     parser.add_argument("--n", type=int, default=1, help="单次请求生成的图片数量 (1-9)")
     parser.add_argument("--style", help="风格 (仅限 image-01-live，如：漫画, 元气, 中世纪, 水彩)")
@@ -126,14 +129,16 @@ if __name__ == "__main__":
     parser.add_argument("--width", type=int, help="自定义宽度 (仅限 image-01)")
     parser.add_argument("--height", type=int, help="自定义高度 (仅限 image-01)")
     parser.add_argument("--no_optimizer", action="store_true", help="关闭提示词优化")
-    parser.add_argument("--output_dir", default="./outputs")
+    # 默认输出目录设为项目根目录下的 outputs (脚本所在目录的父目录)
+    default_output = os.path.join(os.path.dirname(SCRIPT_DIR), "outputs")
+    parser.add_argument("--output_dir", default=default_output)
 
     args = parser.parse_args()
 
     all_results = []
     
-    # 如果用户没提供 aspect_ratio 也没提供宽高，默认使用 1:1
-    ratios = args.aspect_ratio if args.aspect_ratio else ([None] if args.width and args.height else ["1:1"])
+    # 如果用户没提供 aspect_ratio 也没提供宽高，默认使用 4:3
+    ratios = args.aspect_ratio if args.aspect_ratio else ([None] if args.width and args.height else ["4:3"])
 
     for r in ratios:
         paths = generate_images(
